@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta content="Richard Hsu" name="author">
+    <title>Contacts</title>
+    <style>
+        body {
+            font-family: system-ui, "Segoe UI", sans-serif;
+            padding: 0 1.25rem;
+            color: navy;
+            background: lightgray;
+        }
+        h1 {
+            margin: 0 0 0.25rem; font-size: 1.75rem;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08);
+        }
+        caption {
+            caption-side: top;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: #57606a;
+            padding-bottom: 0.5rem;
+        }
+        button {
+            font: inherit;
+            font-weight: 600;
+            padding: 0.6rem 1.1rem;
+            color: #fff;
+            background: dodgerblue;
+            border: none;
+            border-radius: 6px;
+        }
+        th, td { padding: 0.55rem 1rem; text-align: left; border-bottom: 1px solid #eaeef2; }
+        th {background: #f6f8fa; font-size: 0.85rem;}
+        td.slot { width: 6rem; text-align: right; color: #57606a; }
+        tr.hit td { background: #fff3bf; font-weight: 700; color: #1f2328; }
+        #output.ok   { color: #1a7f37; }
+        #output.warn { color: #9a6700; }
+        #output.err  { color: #cf222e; }
+    </style>
+</head>
+<body>
+<main class="database">
+    <h1>Contacts</h1>
+    <p class="subtitle">Look up a contact by name to find its slot number.</p>
+
+     <!-- Displays the table -->
+    <table>
+        <caption>All Slots</caption>
+        <thead>
+        <tr>
+            <th scope="col">Slot #</th>
+            <th scope="col">Number</th>
+        </tr>
+        </thead>
+        <tbody id="slots"></tbody>
+    </table>
+
+    <!-- Displays the button -->
+    <div class="actions">
+        <button id="search" type="button">Search For a Contact</button>
+    </div>
+
+    <!-- Displays starting search status -->
+    <p id="output" role="status">No search run yet.</p>
+</main>
+
+<script type="text/javascript">
+
+    // Contacts are created in an array and assigned values to be referenced via Strings.
+    const contacts = ["Arnold", "Sly", "Dwayne", "Vin", "JCVD", "Steven"];
+
+    const tbody = document.getElementById("slots");
+    const output = document.getElementById("output");
+
+    contacts.forEach((name, slot) => {
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-slot", String(slot));
+
+        const tdSlot = document.createElement("td");
+        tdSlot.className = "slot";
+        tdSlot.textContent = String(slot);
+
+        const tdName = document.createElement("td");
+        tdName.textContent = name;
+
+        tr.append(tdSlot, tdName);
+        tbody.appendChild(tr);
+    });
+
+    // Changes the words and colors for the results message
+    function showMessage(text, kind = "") {
+        output.textContent = text;
+        output.className = kind;
+    }
+
+    // Lights up a row yellow
+    function highlight(slot) {
+        tbody.querySelectorAll("tr").forEach(tr => tr.classList.remove("hit"));
+        if (slot >= 0) {
+            const row = tbody.querySelector('tr[data-slot="' + slot + '"]');
+            if (row) {
+                row.classList.add("hit");
+            }
+        }
+    }
+    // Handles searching for the name and correct slot on a loop
+    function findSlot(name) {
+        let i = 0;
+        let slot = -1;
+        const target = name.toLowerCase();
+
+        while (i < contacts.length) {
+            if (contacts[i].toLowerCase() === target) {
+                slot = i;
+                break;
+            }
+            i += 1;
+        }
+        return slot;
+    }
+
+    // Handles displaying search results
+    function runSearch() {
+        let searchAgain = true;
+        while (searchAgain) {
+            let decided = false;
+
+            while (!decided) {
+                const raw = prompt("Enter a contact name to find its slot number:");
+                if (raw === null) {
+                    highlight(-1);                       // don't leave a stale row lit
+                    showMessage("Search cancelled.", "warn");
+                    return;
+                }
+
+                const name = raw.trim();
+                if (name === "") {
+                    showMessage("Please enter a name.", "warn");
+                    continue;
+                }
+
+                const slot = findSlot(name);
+
+                if (slot !== -1) {
+                    highlight(slot);
+                    showMessage("You selected " + contacts[slot] + ".", "ok");
+                    decided = true;
+                } else {
+                    highlight(-1);
+                    showMessage(`"${name}" was not found in the Contacts database.`, "err");
+                    decided = !confirm(
+                        `"${name}" was not found in the Contacts database.\n\nTry again?`
+                    );
+                }
+            }
+
+            searchAgain = confirm("Would you like to search for another name?");
+        }
+    }
+
+    // Lets the button work
+    document.getElementById("search").addEventListener("click", runSearch);
+
+</script>
+
+
+</body>
+</html>
